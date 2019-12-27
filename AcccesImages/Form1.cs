@@ -55,6 +55,7 @@ namespace AcccesImagges
             
             SubRtn.UpdateTime(consts.StartTime, LblTotalTime);
 
+            //  export property json files
             SubRtn.ExportTablesToJson(LblElapsed, LblTable);
 
             BtnConvert.Enabled = true;
