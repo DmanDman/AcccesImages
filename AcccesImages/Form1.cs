@@ -21,7 +21,7 @@ namespace AcccesImagges
     {
         SubRoutine SubRtn = new SubRoutine();
         Constants consts = new Constants();
-        
+
         public string DBPATH { get; private set; }
         public string DBPATHUNLOAD { get; private set; }
         public string DBNAME { get; private set; }
@@ -40,6 +40,10 @@ namespace AcccesImagges
 
         private void BtnConvert_Click(object sender, EventArgs e)
         {
+
+            SubRtn.WriteSystemErr("title", "err msg", "function name");
+
+
             LblElapsed.Text= "Loading database...";
             LblElapsed.Refresh();
 
@@ -52,7 +56,7 @@ namespace AcccesImagges
             //SubRtn.ConvertImages(PictureBox1, RichTextBox1, PictureBox2);
 
             SubRtn.ProcessPicTables(PicOrig, LblCount, LblTotal, LblTotalTime, LblElapsed, LblTable);
-            
+
             SubRtn.UpdateTime(consts.StartTime, LblTotalTime);
 
             //  export property json files
@@ -100,6 +104,14 @@ namespace AcccesImagges
             public string Start { get; set; }
             public string End { get; set; }
             public long Count { get; set; }
+        }
+
+        public class ObjError
+        {
+            public string Date { get; set; }
+            public string Title { get; set; }
+            public string ErrMsg { get; set; }
+            public string Function { get; set; }
         }
 
         public class Constants
@@ -184,7 +196,7 @@ namespace AcccesImagges
 
                     //  put each picture table into Json
                     ProcessPictures(DSPic1, constants.PicTable1, constants.SystemPath, constants.PicFile);
-                    
+
                     OleDbDataReader reader = null;
                     cmd = new OleDbCommand("select * from tblDoctor", conn);
                     reader = cmd.ExecuteReader();
@@ -207,7 +219,7 @@ namespace AcccesImagges
                     //  compress file stream
                     //picbox2.Image = Base64ToImage(base64Text);
                     DefaultCompresion(picbox2.Image, fullpath, "image2_stream.jpg");
-                    
+
                     //  write blob to image file
                     byte[] blobpic = Convert.FromBase64String(base64Text);
                     File.WriteAllBytes(fullpath + "image2.jpg", blobpic);
@@ -246,7 +258,7 @@ namespace AcccesImagges
                         File.Delete(path);
                     }
 
-                    //  read file image                               
+                    //  read file image
                     //picbox.Image = Image.FromStream(new MemoryStream(blob));
                     //picbox.Image = Image.FromFile("image.jpg");
                     //picbox.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -254,11 +266,11 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to connect to data source.\n" + ex.Message, "ConvertImages");
+                    WriteSystemErr("Failed to connect to data source", ex.Message, "ConvertImages");
                 }
                 finally
                 {
-                    
+
                 }
 
                 conn.Close();
@@ -284,7 +296,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to write string to file.\n" + ex.Message, "Base64ToImage");
+                    WriteSystemErr("Failed to write string to file", ex.Message, "Base64ToImage");
                     return null;
                 }
             }
@@ -326,7 +338,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to convert stream to base64.\n" + ex.Message, "ImgStreamToBase64");
+                    WriteSystemErr("Failed to convert stream to base64", "ex.Message", "ImgStreamToBase64");
                     return null;
                 }
             }
@@ -361,9 +373,9 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to read from: " + TableName + "/n" +  ex);
+                    WriteSystemErr("Failed to read from: " + TableName, ex.Message, "DSPic");
                 }
-                
+
                 return ds;
             }
 
@@ -380,7 +392,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to read from: " + TableName + "\n" + ex.Message, "OleDbCommand");
+                    WriteSystemErr("Failed to read from: " + TableName, ex.Message, "OleDbCommand");
                     return null;
                 }
             }
@@ -414,7 +426,7 @@ namespace AcccesImagges
                 OleDbCommand dbCmd = new OleDbCommand();
                 OleDbDataAdapter dbAd = new OleDbDataAdapter();
                 string base64Text = "";
-                
+
                 OleDbConnection conn2 = new OleDbConnection
                 {
                     //ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" +
@@ -434,7 +446,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to process dataset.\n" + ex.Message, "ProcessDB");
+                    WriteSystemErr("Failed to process dataset", ex.Message, "ProcessDB");
                 }
 
                 //  set file path
@@ -449,7 +461,7 @@ namespace AcccesImagges
                     double StartCount = 0;
                     int StartCountInt = 0;
                     int OddNumber = 0;
-                    
+
                     //  get record count of table
                     double RowCount = dsCount.Tables[0].Rows.Count;
 
@@ -523,7 +535,7 @@ namespace AcccesImagges
                             Image imgFromFile = Image.FromFile(fullpath + "image_temp.jpg");
                             DefaultCompresion(imgFromFile, fullpath, "image_temp_compressed.jpg");
                             imgFromFile.Dispose();      //  release file resources
-                            
+
                             //  read compressed image in as base64
                             string ImageAsBase64 = ImageToBase64(fullpath, "image_temp_compressed.jpg");
 
@@ -568,7 +580,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to process dataset.\n" + ex.Message);
+                    WriteSystemErr("Failed to process dataset", ex.Message, "ProcessDB");
                 }
             }
 
@@ -586,12 +598,12 @@ namespace AcccesImagges
                     OleDbDataAdapter da = new OleDbDataAdapter(cmdOleDb);
                     //da.Fill(ds, TableName);
 
-                    //  return 5             
+                    //  return 5
                     da.Fill(ds, 0, 5, TableName);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to get records.\n" + ex.Message, "DSTop");
+                    WriteSystemErr("Failed to get records", ex.Message, "DSTop");
                 }
 
                 return ds;
@@ -732,7 +744,7 @@ namespace AcccesImagges
                             picBox.Refresh();
                             WriteErr(dspic, x, base64Text, fullpath);
 
-                            MessageBox.Show("Failed to read uncompressed image from file.\n" + ex.Message, "ProcessPicTables");
+                            WriteSystemErr("Failed to read uncompressed image from file", ex.Message, "ProcessPicTables");
                             skip = false;
                             continue;
                         }
@@ -772,13 +784,20 @@ namespace AcccesImagges
                         }
 
                         //  TODO - put blob back in json file
-                        //picDetal.Image = ImageAsBase64;
+                        //picDetail.Image = ImageAsBase64;
                         picDetail.Image = null;
 
-                        //  object to file
+                        //  write picture object to json file
                         File.AppendAllText(fullpath + constants.PicTableCnt[y] + ".json", JsonConvert.SerializeObject(picDetail));
-                    }    
+
+                        if ( x != dspic.Tables[0].Rows.Count - 1 )
+                        {
+                            File.AppendAllText(fullpath + constants.PicTableCnt[y] + ".json", ",\n");
+                        }
+                    }
                     //  end loop through table
+
+                    File.AppendAllText(fullpath + constants.PicTableCnt[y] + ".json", "]");
 
                     //  close recordset
                     dspic.Clear();
@@ -799,7 +818,7 @@ namespace AcccesImagges
 
                     string exportData = JsonConvert.SerializeObject(objExport, Formatting.Indented);
 
-                    //  write to file
+                    //  write to export history file
                     if (y != -1)
                     {
                         if (skip == true)
@@ -811,7 +830,7 @@ namespace AcccesImagges
                             skip = true;
                         }
                     }
-                   
+
                     File.AppendAllText(fullpath + "export_history.json", exportData);
                 }
                 //  end loop through all picture databases
@@ -889,13 +908,13 @@ namespace AcccesImagges
                     {
                         File.AppendAllText(fullpath + "export_history.json", "{ \"" + fullDate + "\":[\n");
                     }
-                    
+
                     //  get tables
                     for (int x = 0; x < TableName.Length ; x++)
                     {
                         string dateStart = DateTime.Now.ToShortDateString() + " " +
                                            DateTime.Now.ToString("HH:mm:ss", System.Globalization.DateTimeFormatInfo.InvariantInfo);
-                       
+
                         //  load table to dataset
                         DataSet ds = new DataSet();
                         OleDbCommand dbCmd = new OleDbCommand("SELECT * FROM " + TableName[x], con);
@@ -957,7 +976,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to open database.\n" + ex.Message, "ExportTablesToJsonDS");
+                    WriteSystemErr("Failed to open database", ex.Message, "ExportTablesToJsonDS");
                 }
             }
 
@@ -980,7 +999,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Could not compress image.\n" + ex.Message, "DefaultCompresion");
+                    WriteSystemErr("Could not compress image", ex.Message, "DefaultCompresion");
                     return false;
                 }
             }
@@ -1010,7 +1029,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to write stream to string.\n" + ex.Message, "StreamToBase64");
+                    WriteSystemErr("Failed to write stream to string", ex.Message, "StreamToBase64");
                     return null;
                 }
             }
@@ -1023,7 +1042,7 @@ namespace AcccesImagges
                     DataSet ds = new DataSet();
                     OleDbConnection con = new OleDbConnection(constants.ConnString + DBPATH + "\\" + DBNAME);
                     con.Open();
-                   
+
                     OleDbCommand dbCmd = new OleDbCommand("SELECT " + TableName + ".IDPictures, " +
                         TableName + ".PicName, " +
                         TableName + ".IDSurgery, " +
@@ -1044,7 +1063,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to open database.\n" + ex.Message, "DSRecords");
+                    WriteSystemErr("Failed to open database", ex.Message, "DSRecords");
                     return null;
                 }
             }
@@ -1066,7 +1085,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to open database.\n" + ex.Message, "DBCompacting");
+                    WriteSystemErr("Failed to open database", ex.Message, "DBCompacting");
                     return true;
                 }
 
@@ -1090,11 +1109,11 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to write byte array to image.\n" + ex.Message, "ByteArrayToImage");
+                    WriteSystemErr("Failed to write byte array to image", ex.Message, "ByteArrayToImage");
                     return null;
                 }
             }
-            
+
             public byte[] ReadImageFileToArray(string path, string filename)
             {
                 try
@@ -1115,7 +1134,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to write image to array.\n" + ex.Message, "ReadImageFileToArray");
+                    WriteSystemErr("Failed to write image to array", ex.Message, "ReadImageFileToArray");
                     return null;
                 }
             }
@@ -1130,7 +1149,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to write image to array.\n" + ex.Message, "ImageToByteArray");
+                    WriteSystemErr("Failed to write image to array", ex.Message, "ImageToByteArray");
                     return null;
                 }
             }
@@ -1138,20 +1157,20 @@ namespace AcccesImagges
             public bool WriteArrayToFile(string FileName, byte[] Data, string path)
             {
                 BinaryWriter Writer = null;
-               
+
                 try
                 {
                     // Create a new stream to write to the file
                     Writer = new BinaryWriter(File.OpenWrite(FileName));
 
-                    // Writer raw data                
+                    // Writer raw data
                     Writer.Write(Data);
                     Writer.Flush();
                     Writer.Close();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to write image to file.\n" + ex.Message, "WriteArrayToFile");
+                    WriteSystemErr("Failed to write image to file", ex.Message, "WriteArrayToFile");
                     return false;
                 }
 
@@ -1169,7 +1188,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to delete file.\n" + ex.Message, "DeleteFile");
+                    WriteSystemErr("Failed to delete file", ex.Message, "DeleteFile");
                 }
             }
 
@@ -1184,7 +1203,7 @@ namespace AcccesImagges
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to write string to file.\n" + ex.Message, "WriteToFile");
+                    WriteSystemErr("Failed to write string to file", ex.Message, "WriteToFile");
                 }
             }
 
@@ -1194,7 +1213,7 @@ namespace AcccesImagges
 
                 DateTime startTime = DateTime.Now;
                 File.AppendAllText(fullpath + "picture_blank.json", startTime.ToShortDateString() + " " + startTime.ToShortTimeString() + ", ");
-               
+
                 //  blank image
                 PictureBlank picBlank = new PictureBlank
                 {
@@ -1214,7 +1233,7 @@ namespace AcccesImagges
                 //  blank image string to file
                 if ((ImageAsBase64 == null) || (ImageAsBase64 == ""))
                 {
-                    File.AppendAllText(fullpath + 
+                    File.AppendAllText(fullpath +
                         "picture_blank.json",
                         picBlank.IDPicture.ToString() + ", " +
                         picBlank.PicName.ToString() + ", " +
@@ -1246,10 +1265,55 @@ namespace AcccesImagges
                 }
 
                 //  write to file
-                File.AppendAllText(fullpath + "picture_err.json", 
-                    picErr.IDPicture + ", " + 
+                File.AppendAllText(fullpath + "picture_err.json",
+                    picErr.IDPicture + ", " +
                     picErr.PicName + ", " +
                     picErr.IDSurgery + "\n");
+            }
+
+            public void WriteSystemErr (string title, string errmsg, string function)
+            {
+                //  set file path
+                string fullpath = @constants.SystemPath + @"\";
+                fullpath = fullpath.Substring(6);
+
+                try
+                {
+                    ObjError objError = new ObjError();
+                    string dateStart = DateTime.Now.ToShortDateString() + " " +
+                                       DateTime.Now.ToString("HH:mm:ss", System.Globalization.DateTimeFormatInfo.InvariantInfo);
+
+                    //  create error object
+                    objError.Date = dateStart;
+                    objError.Title = title;
+                    objError.ErrMsg = errmsg;
+                    objError.Function = function;
+
+                    //  "fix" last line before appending
+                    if (File.Exists(fullpath + "export_err.json"))
+                    {
+                        var tempFile = Path.GetTempFileName();
+                        var linesToKeep = File.ReadLines(fullpath + "export_err.json").Where(l => l != "]}");
+
+                        File.WriteAllLines(tempFile, linesToKeep);
+                        File.Delete(fullpath + "export_err.json");
+                        File.Move(tempFile, fullpath + "export_err.json");
+                        File.AppendAllText(fullpath + "export_err.json", "],\n");
+                        File.AppendAllText(fullpath + "export_err.json", "\"" + dateStart + "\":[\n");
+                    }
+                    else
+                    {
+                        File.AppendAllText(fullpath + "export_err.json", "{ \"" + dateStart + "\":[\n");
+                    }
+
+                    //  write err object to json file
+                    File.AppendAllText(fullpath + "export_err.json", JsonConvert.SerializeObject(objError));
+                    File.AppendAllText(fullpath + "export_err.json", "\n]}");
+                }
+                catch(Exception ex)
+                {
+                    File.AppendAllText(fullpath + "export_error.json", "\nError writing to export_err.json\nex\n");
+                }
             }
 
             public void UpdateTime(DateTime start, Label ElapsedTime)
